@@ -47,7 +47,7 @@ class Infoblox(object):
 	delete_host_alias
 	create_cname_record
 	delete_cname_record
-        update_cname_record
+                update_cname_record
 	create_dhcp_range
 	delete_dhcp_range
 	get_next_available_ip
@@ -64,6 +64,7 @@ class Infoblox(object):
 	get_network_extattrs
 	update_network_extattrs
 	delete_network_extattrs
+	get_host_by_alias
     """
 
     def __init__(self, iba_ipaddr, iba_user, iba_password, iba_wapi_version, iba_dns_view, iba_network_view, iba_verify_ssl=False):
@@ -1041,3 +1042,33 @@ class Infoblox(object):
 	    raise Exception(r)
 	except Exception:
 	    raise
+
+    def get_host_by_alias(self, alias, fields=None):
+        """ Implements IBA REST API call to retrieve HOST records by alias
+        :param alias: alias in fqdn or fqdn regexp filter
+        :param fields: comma-separated list of field names to retrieve (optional)
+        """
+        if fields:
+            rest_url = 'https://' + self.iba_host + '/wapi/v' + self.iba_wapi_version + '/record:host?alias~=' + alias + '&view=' + self.iba_dns_view + '&_return_fields=' + fields
+        else:
+            rest_url = 'https://' + self.iba_host + '/wapi/v' + self.iba_wapi_version + '/record:host?alias~=' + alias + '&view=' + self.iba_dns_view
+        hosts = []
+        try:
+            r = requests.get(url=rest_url, auth=(self.iba_user, self.iba_password), verify=self.iba_verify_ssl)
+            r_json = r.json()
+            if r.status_code == 200:
+                if len(r_json) > 0:
+                    for host in r_json:
+                           hosts.append(host)
+                    return hosts
+                else:
+                    raise InfobloxNotFoundException("No hosts found for regexp filter: " + fqdn)
+            else:
+                if 'text' in r_json:
+                    raise InfobloxGeneralException(r_json['text'])
+                else:
+                    r.raise_for_status()
+        except ValueError:
+            raise Exception(r)
+        except Exception:
+            raise
