@@ -1062,7 +1062,7 @@ class Infoblox(object):
                            hosts.append(host)
                     return hosts
                 else:
-                    raise InfobloxNotFoundException("No hosts found for regexp filter: " + fqdn)
+                    raise InfobloxNotFoundException("No hosts found for regexp filter: " + alias)
             else:
                 if 'text' in r_json:
                     raise InfobloxGeneralException(r_json['text'])
